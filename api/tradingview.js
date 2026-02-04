@@ -16,13 +16,6 @@ export default async function handler(req, res) {
             return res.status(200).json({ status: "test sent" });
         }
 
-
-        // Optional: verifica della secret
-        const secret = req.headers["x-tradingview-secret"];
-        if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-
         const alert = req.body;
 
         const message = `🚨 *Alert TradingView*\n\n${JSON.stringify(alert, null, 2)}`;
