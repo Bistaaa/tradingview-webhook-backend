@@ -13,41 +13,47 @@ export default async function handler(req, res) {
             return res.status(200).json({ status: "test sent" });
         }
 
-        // Solo POST da TradingView
+        // Solo POST
         if (req.method !== "POST") {
             return res.status(405).json({ error: "Method not allowed" });
         }
 
         const alert = req.body;
 
-        // Ci interessa solo se TradingView manda testo puro
+        // Accettiamo solo messaggi testuali (TradingView può inviare stringhe)
         if (typeof alert !== "string") {
             return res.status(200).json({ status: "ignored_non_string" });
         }
 
         const text = alert.trim();
-        const lower = text.toLowerCase();
+        const textLower = text.toLowerCase();
 
-        // Deve contenere "rectangle" o "rettangolo" (case-insensitive)
-        if (!lower.includes("rectangle") && !lower.includes("rettangolo")) {
+        // Verifica se contiene "rectangle" o "rettangolo" (case-insensitive)
+        if (!textLower.includes("rectangle") && !textLower.includes("rettangolo")) {
             return res.status(200).json({ status: "ignored_no_rectangle" });
         }
 
-        // Estrarre il pair: prima parte prima della virgola
+        // Estrai il pair: prendiamo la parte prima della prima virgola
+        // Esempio: "SOLUSDT, 4h Entering Rectangle" -> "SOLUSDT"
         const parts = text.split(",");
         if (parts.length < 1) {
-            return res.status(200).json({ status: "ignored_no_pair" });
+            return res.status(200).json({ status: "ignored_bad_format" });
         }
 
-        const pair = parts[0].trim();
-        if (!pair) {
-            return res.status(200).json({ status: "ignored_empty_pair" });
+        const pairCandidate = parts[0].trim();
+
+        // Validazione semplice del pair: almeno 2 caratteri alfanumerici, senza spazi
+        const pairValid = /^[A-Za-z0-9._-]{2,}$/;
+        if (!pairValid.test(pairCandidate)) {
+            return res.status(200).json({ status: "ignored_invalid_pair" });
         }
 
-        // Messaggio finale per Telegram
+        const pair = pairCandidate.toUpperCase();
+
+        // Componi il messaggio Telegram
         const message = `🚨 *Alert TradingView*\n\nSimbolo: *${pair}*\nEntrato su zona forte`;
 
-        await fetch(`https://api.telegram.org/bot(${process.env.TELEGRAM_TOKEN})/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -57,8 +63,7 @@ export default async function handler(req, res) {
             })
         });
 
-        return res.status(200).json({ status: "ok_sent" });
-
+        return res.status(200).json({ status: "ok_sent", pair });
     } catch (err) {
         console.error("Error:", err);
         return res.status(500).json({ error: "Internal server error" });
