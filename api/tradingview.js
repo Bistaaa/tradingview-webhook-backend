@@ -47,7 +47,7 @@ export default async function handler(req, res) {
         //    - <TIMEFRAME> = qualcosa tipo "4h", "1h", "30", "5", ecc.
         //
         // Regex:
-        const pattern = /^(\S+),\s*([\d]+h?|[\d]+)\s+Entering Rectangle$/;
+        const pattern = /^(\S+),\s*([\d]+h?|[\d]+)\s+(Entering Rectangle|Entrando Rettangolo)$/;
 
         const match = text.match(pattern);
 
