@@ -18,7 +18,17 @@ export default async function handler(req, res) {
 
         const alert = req.body;
 
-        const message = `🚨 *Alert TradingView*\n\n${JSON.stringify(alert, null, 2)}`;
+        let message;
+
+        // Se TradingView invia JSON → formattiamo
+        if (typeof alert === "object") {
+            message = `🚨 *Alert TradingView*\n\n${JSON.stringify(alert, null, 2)}`;
+        }
+
+        // Se TradingView invia testo puro → usiamolo direttamente
+        if (typeof alert === "string") {
+            message = alert;
+        }
 
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
             method: "POST",
@@ -29,6 +39,7 @@ export default async function handler(req, res) {
                 parse_mode: "Markdown"
             })
         });
+
 
         return res.status(200).json({ status: "ok" });
     } catch (err) {
